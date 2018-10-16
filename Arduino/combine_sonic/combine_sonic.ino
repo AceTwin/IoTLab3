@@ -4,6 +4,7 @@
 *  We write the server first because we need its IP address
 * Ref:https://arduino.stackexchange.com/questions/18176/peer-to-peer-communication
 * https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/server-examples.html
+* https://tttapa.github.io/ESP8266/Chap10%20-%20Simple%20Web%20Server.html
 */
 
 #include <ESP8266WiFi.h>
@@ -12,7 +13,10 @@
 
 const char* ssid = "echosound";       // ssid of server (Access Point (AP))
 const char* password = "";        // password of server (Access Point (AP))
-WiFiServer server(80);            //Service Port
+//WiFiServer server(80);            //Service Port
+ESP8266WebServer server(80);            //Service Port
+void handleRoot();              // function prototypes for HTTP handlers
+void handleNotFound();
 
 int ledPin = 2; // GPIO2 of Server ESP8266
 int Status = 0; // This is the state we are going to set for the client to read via HTML
@@ -57,6 +61,7 @@ String InfoPage()  // This is the HTML page we will send
 }
 void setup() 
 {
+      
   //Sonic
     pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
     pinMode(echoPin, INPUT); // Sets the echoPin as an Input
@@ -81,13 +86,15 @@ void setup()
     Serial.println("/");
 
     // Tell the server to begin listening for incoming connections
-    server.begin();
+  server.on("/state", handleRoot);               // Call the 'handleRoot' function when a client requests URI "/"
+  server.onNotFound(handleNotFound);        // When a client requests an unknown URI (i.e. something other than "/"), call function "handleNotFound"
+    //server.begin();
     Serial.println("Server listening for incoming connections");
 }  
 
 void loop() 
 {
-    
+   // Serial.printf("Stations connected to soft-AP = %d\n", WiFi.softAPgetStationNum());
 //** Sonic Code **//
     // Clears the trigPin
     digitalWrite(trigPin, LOW);
@@ -101,9 +108,21 @@ void loop()
     // Calculating the distance
     distance= duration*0.034/2;
     // Prints the distance on the Serial Monitor
-    Serial.print("Distance: ");
-    Serial.println(distance);
-
+    //Serial.print("Distance: ");
+    //Serial.println(distance);
+    if (distance >=23)
+    {
+      Status = 3;
+    }
+    else if (10 < distance < 23)
+    {
+      Status = 2;
+    }
+    else if (10 < distance < 23)
+    {
+      Status = 1;
+    }
+/*
 //** Server code ** //
     
     // Check if a client has connected
@@ -145,5 +164,18 @@ void loop()
     //client.flush();
     client.stop();
     Serial.println("Client disconnected");
-  }
+    }
+*/
+  server.handleClient();  
+}
+
+void handleRoot() {
+  
+  server.send(200, "text/plain", String(Status));   // Send HTTP status 200 (Ok) and send some text to the browser/client
+  Serial.println(String(Status) + " sent to client.");
+}
+
+void handleNotFound(){
+  Serial.println("Something went wrong... - 404 delivered");
+  server.send(404, "text/plain", "404: Not found"); // Send HTTP status 404 (Not Found) when there's no handler for the URI in the request
 }
