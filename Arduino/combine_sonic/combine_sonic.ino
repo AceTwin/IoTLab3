@@ -9,7 +9,7 @@
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h> 
-#include <ESP8266WebServer.h>
+#include <ESP8266WebServer.h> //Set up the access point
 
 const char* ssid = "echosound";       // ssid of server (Access Point (AP))
 const char* password = "";        // password of server (Access Point (AP))
@@ -22,6 +22,7 @@ int ledPin = 2; // GPIO2 of Server ESP8266
 int Status = 0; // This is the state we are going to set for the client to read via HTML
 
 //variables for Sonic  
+  
   // defines pins numbers
   const int trigPin = D5;
   const int echoPin = D2;
@@ -62,11 +63,11 @@ String InfoPage()  // This is the HTML page we will send
 void setup() 
 {
       
-  //Sonic
+    //Sonic
     pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
     pinMode(echoPin, INPUT); // Sets the echoPin as an Input
 
-//Server
+    //Server
     delay(1000);
     Serial.begin(115200);    // to use tools->serial monitor
 
@@ -78,6 +79,9 @@ void setup()
     Serial.println();
     Serial.print("Connecting to: "); Serial.println(ssid);
     WiFi.softAP(ssid, password);
+
+    //Check if Access Point setup was successful - just added -- https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/soft-access-point-examples.html
+    WiFi.softAP("ESPsoftAP_01", "pass-to-soft-AP") ? "Ready" : "Failed!"
 
     // Display the server address
     Serial.print("Connected, My address: ");
