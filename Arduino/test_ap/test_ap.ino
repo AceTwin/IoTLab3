@@ -1,6 +1,7 @@
 /* Server
 *  We write the server first because we need its IP address
 * Ref:https://arduino.stackexchange.com/questions/18176/peer-to-peer-communication
+* https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/server-examples.html
 */
 
 #include <ESP8266WiFi.h>
@@ -12,7 +13,38 @@ const char* password = "";        // password of server (Access Point (AP))
 WiFiServer server(80);            //Service Port
 
 int ledPin = 2; // GPIO2 of Server ESP8266
+int Status = 0; // This is the state we are going to set for the client to read via HTML
 
+String prepareHtmlPage()  // This is the HTML page we will send
+{
+  String htmlPage =
+     String("HTTP/1.1 200 OK\r\n") +
+            "Content-Type: text/html\r\n" +
+            "Connection: close\r\n" +  // the connection will be closed after completion of the response
+           /* "Refresh: 5\r\n" +  // refresh the page automatically every 5 sec*/
+            "\r\n" +
+            "<!DOCTYPE HTML>" +
+            "<html>" +
+            String(Status) +
+            "</html>" +
+            "\r\n";
+  return htmlPage;
+}
+String InfoPage()  // This is the HTML page we will send
+{
+  String htmlPage =
+     String("HTTP/1.1 200 OK\r\n") +
+            "Content-Type: text/html\r\n" +
+            "Connection: close\r\n" +  // the connection will be closed after completion of the response
+           /* "Refresh: 5\r\n" +  // refresh the page automatically every 5 sec*/
+            "\r\n" +
+            "<!DOCTYPE HTML>" +
+            "<html>" +
+            "This is an IOT website.  You are not using me properly!" +
+            "</html>" +
+            "\r\n";
+  return htmlPage;
+}
 void setup() 
 {
     delay(1000);
@@ -50,24 +82,34 @@ void loop()
     // Wait until the client sends some data
     Serial.println();
     Serial.println("Client connected");
-    while(!client.available())
+    if(client.available())
     {
-        delay(1);
-    }
+      while (client.connected())
+      {
+        // read line by line what the client (web browser) is requesting
+        if (client.available())
+        {
+          String line = client.readStringUntil('\r');
+          Serial.print(line);
 
-    // Read the request
-    String request = client.readStringUntil('\r');  
-    Serial.print("Request = "); Serial.println(request);
+          if (line.indexOf("/state") != -1) //Browse to /state
 
-    if (request.indexOf("/ON/") != -1) 
-    {
-        digitalWrite(ledPin, LOW); // turn LED on
-    } 
-    if (request.indexOf("/OFF/") != -1)
-    {
-        digitalWrite(ledPin, HIGH); // turn LED off
-    }
+          {
+            client.println(prepareHtmlPage());
+            break;
+          }
+          if (line.length() == 1 && line[0] == '\n') // Browse to root page
+          {
+            client.println(InfoPage());
+            break;
+          }
+        }
+      }
+    delay(1); // give the web browser time to receive the data
 
-    client.flush();
+
+    //client.flush();
+    client.stop();
     Serial.println("Client disconnected");
+  }
 }
