@@ -68,6 +68,18 @@ void setup()
     // Tell the server to begin listening for incoming connections
     server.begin();
     Serial.println("Server listening for incoming connections");
+
+    //test if working - https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/soft-access-point-examples.html
+    boolean result = WiFi.softAP(ssid,password);
+      if(result == true)
+      {
+        Serial.println("Ready");
+      }
+      else
+      {
+        Serial.println("Failed!");
+      }
+    
 }  
 
 void loop() 

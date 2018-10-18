@@ -61,8 +61,7 @@ String InfoPage()  // This is the HTML page we will send
   return htmlPage;
 }
 void setup() 
-{
-      
+{    
     //Sonic
     pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
     pinMode(echoPin, INPUT); // Sets the echoPin as an Input
@@ -79,9 +78,6 @@ void setup()
     Serial.println();
     Serial.print("Connecting to: "); Serial.println(ssid);
     WiFi.softAP(ssid, password);
-
-    //Check if Access Point setup was successful - just added -- https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/soft-access-point-examples.html
-    WiFi.softAP("ESPsoftAP_01", "pass-to-soft-AP") ? "Ready" : "Failed!"
 
     // Display the server address
     Serial.print("Connected, My address: ");
