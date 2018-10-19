@@ -9,7 +9,7 @@
 #include <ESP8266WebServer.h>
 
 const char* ssid = "echosound";       // ssid of server (Access Point (AP))
-const char* password = "";        // password of server (Access Point (AP))
+const char* password = "password";        // password of server (Access Point (AP))
 WiFiServer server(80);            //Service Port
 
 int ledPin = 2; // GPIO2 of Server ESP8266

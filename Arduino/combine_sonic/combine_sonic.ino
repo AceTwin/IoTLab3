@@ -11,11 +11,11 @@
 #include <WiFiClient.h> 
 #include <ESP8266WebServer.h> //Set up the access point
 
-const char* ssid = "echosound";       // ssid of server (Access Point (AP))
-const char* password = "";        // password of server (Access Point (AP))
+const char* ssid = "ssid";       // ssid of server (Access Point (AP))
+const char* password = "password";        // password of server (Access Point (AP))
 //WiFiServer server(80);            //Service Port
 ESP8266WebServer server(80);            //Service Port
-void handleRoot();              // function prototypes for HTTP handlers
+void handleState();              // function prototypes for HTTP handlers
 void handleNotFound();
 
 int ledPin = 2; // GPIO2 of Server ESP8266
@@ -30,36 +30,7 @@ int Status = 0; // This is the state we are going to set for the client to read 
   long duration;
   int distance;
 
-String prepareHtmlPage()  // This is the HTML page we will send
-{
-  String htmlPage =
-     String("HTTP/1.1 200 OK\r\n") +
-            "Content-Type: text/html\r\n" +
-            "Connection: close\r\n" +  // the connection will be closed after completion of the response
-           /* "Refresh: 5\r\n" +  // refresh the page automatically every 5 sec*/
-            "\r\n" +
-            "<!DOCTYPE HTML>" +
-            "<html>" +
-            String(Status) +
-            "</html>" +
-            "\r\n";
-  return htmlPage;
-}
-String InfoPage()  // This is the HTML page we will send
-{
-  String htmlPage =
-     String("HTTP/1.1 200 OK\r\n") +
-            "Content-Type: text/html\r\n" +
-            "Connection: close\r\n" +  // the connection will be closed after completion of the response
-           /* "Refresh: 5\r\n" +  // refresh the page automatically every 5 sec*/
-            "\r\n" +
-            "<!DOCTYPE HTML>" +
-            "<html>" +
-            "This is an IOT website.  You are not using me properly!" +
-            "</html>" +
-            "\r\n";
-  return htmlPage;
-}
+
 void setup() 
 {    
     //Sonic
@@ -69,26 +40,36 @@ void setup()
     //Server
     delay(1000);
     Serial.begin(115200);    // to use tools->serial monitor
+    WiFi.begin(ssid, password);
+
+      // Wait for connection
+  while (WiFi.status() != WL_CONNECTED) 
+  {
+    delay(500); //5 second wait
+    Serial.print(".");
+  }
 
     pinMode(ledPin, OUTPUT);   // set GPIO 2 as an output
 
-    WiFi.mode(WIFI_AP_STA);  // Set WiFi to AP and station mode
+//    WiFi.mode(WIFI_AP_STA);  // Set WiFi to AP and station mode
 
     // Connect to the WiFi network
     Serial.println();
     Serial.print("Connecting to: "); Serial.println(ssid);
-    WiFi.softAP(ssid, password);
+//    WiFi.softAP(ssid, password);
 
     // Display the server address
     Serial.print("Connected, My address: ");
     Serial.print("http://");
-    Serial.print(WiFi.softAPIP());
+//    Serial.print(WiFi.softAPIP());
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
     Serial.println("/");
 
     // Tell the server to begin listening for incoming connections
-  server.on("/state", handleRoot);               // Call the 'handleRoot' function when a client requests URI "/"
-  server.onNotFound(handleNotFound);        // When a client requests an unknown URI (i.e. something other than "/"), call function "handleNotFound"
-    //server.begin();
+    server.on("/state", handleState);               // Call the 'handleRoot' function when a client requests URI "/"
+    server.onNotFound(handleNotFound);        // When a client requests an unknown URI (i.e. something other than "/"), call function "handleNotFound"
+    server.begin();
     Serial.println("Server listening for incoming connections");
 }  
 
@@ -110,66 +91,28 @@ void loop()
     // Prints the distance on the Serial Monitor
     //Serial.print("Distance: ");
     //Serial.println(distance);
-    if (distance >=23)
+    
+    if (distance >= 100)
     {
       Status = 3;
     }
-    else if (10 < distance < 23)
+    else if (distance >=50)
     {
       Status = 2;
     }
-    else if (10 < distance < 23)
+    else if (distance >= 30)
     {
       Status = 1;
     }
-/*
-//** Server code ** //
-    
-    // Check if a client has connected
-    WiFiClient client = server.available();
-    if (!client) // if not available, return
+    else if (distance < 30)
     {
-        return;
+      Status = 5;
     }
 
-    // Wait until the client sends some data
-    Serial.println();
-    Serial.println("Client connected");
-    if(client.available())
-    {
-      while (client.connected())
-      {
-        // read line by line what the client (web browser) is requesting
-        if (client.available())
-        {
-          String line = client.readStringUntil('\r');
-          Serial.print(line);
-
-          if (line.indexOf("/state") != -1) //Browse to /state
-
-          {
-            client.println(prepareHtmlPage());
-            break;
-          }
-          if (line.length() == 1 && line[0] == '\n') // Browse to root page
-          {
-            client.println(InfoPage());
-            break;
-          }
-        }
-      }
-    delay(1); // give the web browser time to receive the data
-
-
-    //client.flush();
-    client.stop();
-    Serial.println("Client disconnected");
-    }
-*/
   server.handleClient();  
 }
 
-void handleRoot() {
+void handleState() {
   
   server.send(200, "text/plain", String(Status));   // Send HTTP status 200 (Ok) and send some text to the browser/client
   Serial.println(String(Status) + " sent to client.");
